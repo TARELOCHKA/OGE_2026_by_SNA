@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Результат</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="m-0">Результат</h3>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary" href="/">Оценка одного</a>
+      <a class="btn btn-outline-secondary" href="/batch">Batch</a>
+    </div>
+  </div>
+
+  {% if error %}
+    <div class="alert alert-danger">
+      <b>Ошибка:</b> {{ error }}
+    </div>
+  {% endif %}
+
+  {% if result %}
+    <div class="card p-3 shadow-sm mb-3">
+      <h5>Оценка</h5>
+      <pre class="mb-0">{{ result | tojson(indent=2, ensure_ascii=false) }}</pre>
+    </div>
+  {% endif %}
+
+  {% if batch_results %}
+    <div class="card p-3 shadow-sm mb-3">
+      <h5>Batch results ({{ batch_results|length }})</h5>
+      <pre class="mb-0">{{ batch_results | tojson(indent=2, ensure_ascii=false) }}</pre>
+    </div>
+  {% endif %}
+
+  {% if batch_errors and batch_errors|length > 0 %}
+    <div class="card p-3 shadow-sm mb-3 border-danger">
+      <h5 class="text-danger">Batch errors ({{ batch_errors|length }})</h5>
+      <pre class="mb-0">{{ batch_errors | tojson(indent=2, ensure_ascii=false) }}</pre>
+    </div>
+  {% endif %}
+
+  {% if raw_input %}
+    <div class="card p-3 shadow-sm">
+      <h5>Входные данные</h5>
+      <pre class="mb-0">{{ raw_input | tojson(indent=2, ensure_ascii=false) }}</pre>
+    </div>
+  {% endif %}
+</div>
+</body>
+</html>
