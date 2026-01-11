@@ -41,9 +41,9 @@ Thumbs.db
 # ---------------------------
 # Data / generated files
 # ---------------------------
-data/*.csv
-data/*.tsv
-data/*.json
+# data/*.csv
+# data/*.tsv
+# data/*.json
 
 # Если вдруг понадобятся сами данные — закомментируйте строки выше
 
