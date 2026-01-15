@@ -1,6 +1,8 @@
 from flask import Flask
 from .config import Config
 from .routes import bp
+from dotenv import load_dotenv
+load_dotenv()
 
 
 def create_app() -> Flask:

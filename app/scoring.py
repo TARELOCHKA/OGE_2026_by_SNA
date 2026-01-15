@@ -5,6 +5,7 @@ from .schemas import ScoreRequest, validate_score_output
 from .prompting import build_prompt, PROMPT_VERSION
 from .json_utils import extract_json
 from .gigachat_client import GigaChatClient
+from .repair import build_repair_prompt
 
 
 def _get_client() -> GigaChatClient:
@@ -12,7 +13,7 @@ def _get_client() -> GigaChatClient:
     return GigaChatClient(
         auth_token=cfg.get("GIGACHAT_TOKEN", ""),
         timeout=cfg.get("REQUEST_TIMEOUT_SEC", 60),
-        verify_ssl=False,
+        verify_ssl=False,  # у вас так надо из-за SSL
     )
 
 
@@ -22,29 +23,47 @@ def score_essay(req: ScoreRequest) -> Dict:
     - строим промпт
     - вызываем GigaChat
     - парсим JSON
+    - если JSON сломан -> делаем отдельный repair-запрос
     - валидируем диапазоны/поля
-    - 1 ретрай если формат сломан
+    - 1 ретрай если всё равно плохо
     """
     client = _get_client()
     prompt = build_prompt(req)
 
-    model_name = current_app.config.get("GIGACHAT_MODEL", "GigaChat")  # можно поменять на Lite/Max и т.п.
-    temperature = float(current_app.config.get("TEMPERATURE", 0.2))
+    model_name = current_app.config.get("GIGACHAT_MODEL", "GigaChat")
+    temperature = float(current_app.config.get("TEMPERATURE", 0.0))  # для метрик лучше 0.0
     max_tokens = int(current_app.config.get("MAX_TOKENS", 900))
 
     last_err = None
+
     for attempt in range(2):  # 0 — основной, 1 — ретрай
         try:
+            repaired = False
+
             raw = client.chat_completion(
                 model=model_name,
                 prompt=prompt if attempt == 0 else (
-                    prompt + "\n\nВажно: твой прошлый ответ был невалидным. Верни только JSON строго по схеме."
+                    prompt
+                    + "\n\nВАЖНО: прошлый ответ был невалидным JSON. "
+                      "Верни ТОЛЬКО валидный JSON по схеме (двойные кавычки, без markdown)."
                 ),
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
 
-            data = extract_json(raw)
+            # 1) Пытаемся распарсить как есть
+            try:
+                data = extract_json(raw)
+            except Exception:
+                # 2) Если не получилось — просим модель “починить” свой же ответ
+                repaired = True
+                fixed_raw = client.chat_completion(
+                    model=model_name,
+                    prompt=build_repair_prompt(raw),
+                    temperature=0.0,
+                    max_tokens=600,
+                )
+                data = extract_json(fixed_raw)
 
             out = {
                 "essay_id": req.essay_id,
@@ -61,7 +80,8 @@ def score_essay(req: ScoreRequest) -> Dict:
                     "prompt_version": PROMPT_VERSION,
                     "attempt": attempt,
                     "essay_type": req.essay_type,
-                }
+                    "json_repair": repaired,
+                },
             }
 
             validate_score_output(out)

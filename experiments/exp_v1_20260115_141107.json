@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-01-15T14:11:07",
+  "score": 0.6021505376344086,
+  "mae": 0.6607142857142856,
+  "prompt_version": "v2",
+  "temperature": 0.0,
+  "model": "GigaChat",
+  "submission_file": "data/submission.csv",
+  "attempts_note": "Потрачено 1/5 попыток"
+}
