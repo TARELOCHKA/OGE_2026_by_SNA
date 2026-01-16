@@ -1,0 +1,18 @@
+{
+  "DataSet": {
+    "Rows": [
+      {
+        "Score": 0.6054054054054053,
+        "AttemptsMessage": "Потрачено 1/5 попыток"
+      }
+    ]
+  },
+  "DataSet2": {
+    "Rows": [
+      {
+        "StatusCode": "200 OK",
+        "Message": null
+      }
+    ]
+  }
+}

@@ -4,10 +4,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Essay Scoring App</title>
+  <title>Оценка сочинений ОГЭ</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background: #0b1220; }
+    body {
+      background: linear-gradient(135deg, #0b1220 0%, #1a1f35 100%);
+      min-height: 100vh;
+    }
     .app-shell { min-height: 100vh; }
     .glass {
       background: rgba(255,255,255,0.06);
@@ -22,18 +25,24 @@
       border: 1px solid rgba(13,110,253,0.35);
       color: #cfe2ff;
     }
-    textarea.form-control, input.form-control {
+    textarea.form-control, input.form-control, select.form-control {
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.10);
       color: #fff;
     }
-    textarea.form-control:focus, input.form-control:focus {
+    textarea.form-control:focus, input.form-control:focus, select.form-control:focus {
       background: rgba(255,255,255,0.08);
       border-color: rgba(13,110,253,0.55);
       box-shadow: 0 0 0 .25rem rgba(13,110,253,.15);
       color: #fff;
     }
-    .nav-pills .nav-link { color: rgba(255,255,255,0.75); }
+    .nav-pills .nav-link {
+      color: rgba(255,255,255,0.75);
+      transition: all 0.3s;
+    }
+    .nav-pills .nav-link:hover {
+      background: rgba(255,255,255,0.05);
+    }
     .nav-pills .nav-link.active {
       background: rgba(13,110,253,0.25);
       border: 1px solid rgba(13,110,253,0.45);
@@ -48,32 +57,212 @@
       overflow: auto;
       white-space: pre-wrap;
       word-break: break-word;
+      max-height: 600px;
     }
     .hint { font-size: 0.92rem; }
+    .essay-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .essay-card:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(13,110,253,0.4);
+    }
+    .essay-card.selected {
+      background: rgba(13,110,253,0.15);
+      border-color: rgba(13,110,253,0.5);
+    }
+    .essay-card input[type="checkbox"] {
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .essay-card strong {
+      color: #fff !important;
+    }
+    .essay-card .text-white-50 {
+      color: rgba(255,255,255,0.6) !important;
+    }
+    .essay-card .text-muted {
+      color: rgba(255,255,255,0.5) !important;
+    }
+    .essay-card .small {
+      color: rgba(255,255,255,0.7) !important;
+    }
+    .results-table {
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .results-table table {
+      margin: 0;
+    }
+    .results-table thead {
+      background: rgba(13,110,253,0.2);
+    }
+    .results-table tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .results-table tbody tr:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    .score-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .score-good { background: rgba(40,167,69,0.2); color: #6fcf97; }
+    .score-medium { background: rgba(255,193,7,0.2); color: #ffd93d; }
+    .score-low { background: rgba(220,53,69,0.2); color: #ff6b6b; }
+    .alert-danger {
+      background: rgba(220,53,69,0.15);
+      border: 1px solid rgba(220,53,69,0.4);
+      color: #ff6b6b;
+    }
+    .alert-danger ul li {
+      color: rgba(255,255,255,0.9);
+    }
+    .loading-spinner {
+      display: none;
+    }
+    .loading-spinner.active {
+      display: inline-block;
+    }
+    .essay-list-container {
+      max-height: 500px;
+      overflow-y: auto;
+      padding: 10px;
+      background: rgba(0,0,0,0.15);
+      border-radius: 12px;
+    }
+    .essay-list-container::-webkit-scrollbar {
+      width: 8px;
+    }
+    .essay-list-container::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+    }
+    .essay-list-container::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+    }
+    .essay-list-container::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    .filter-controls {
+      background: rgba(0,0,0,0.15);
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+    }
+    .progress-container {
+      display: none;
+    }
+    .progress-container.active {
+      display: block;
+    }
+    .border-bottom.border-secondary {
+      border-color: rgba(255,255,255,0.1) !important;
+    }
+    .border-top.border-secondary {
+      border-color: rgba(255,255,255,0.1) !important;
+    }
+    details summary {
+      list-style: none;
+    }
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+    details summary::before {
+      content: '▶ ';
+      display: inline-block;
+      margin-right: 8px;
+      transition: transform 0.2s;
+      color: rgba(255,255,255,0.5);
+    }
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+    .btn {
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: rgba(13,110,253,0.8);
+      border-color: rgba(13,110,253,0.8);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: rgba(13,110,253,1);
+      border-color: rgba(13,110,253,1);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(13,110,253,0.3);
+    }
+    .btn-outline-light {
+      background: transparent;
+      border-color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.9);
+    }
+    .btn-outline-light:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.5);
+      color: #fff;
+    }
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.875rem;
+    }
+    .form-control-sm {
+      padding: 6px 10px;
+      font-size: 0.875rem;
+    }
+    .filter-controls .btn {
+      white-space: nowrap;
+      min-width: auto;
+    }
+    @media (max-width: 768px) {
+      .filter-controls .col-md-2 {
+        margin-top: 10px;
+      }
+      .filter-controls .d-flex {
+        flex-direction: column;
+      }
+      .filter-controls .d-flex .btn {
+        width: 100%;
+        margin-top: 5px;
+      }
+    }
   </style>
 </head>
 <body>
 <div class="container py-4 app-shell">
   <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <div class="brand text-white fs-4">Essay Scoring</div>
-      <div class="muted">UI для проверки сочинений (одно эссе / пачка)</div>
+      <div class="brand text-white fs-3 mb-1">Оценка сочинений ОГЭ</div>
+      <div class="muted">Система автоматической проверки сочинений</div>
     </div>
     <div class="d-flex gap-2 align-items-center">
       <span class="badge rounded-pill badge-soft">Flask UI</span>
-      <a class="btn btn-outline-light btn-sm" href="/health">health</a>
+      <a class="btn btn-outline-light btn-sm" href="/health">Health</a>
     </div>
   </div>
 
   <!-- Main -->
-  <div class="row g-3">
+  <div class="row g-4">
     <!-- Left panel -->
     <div class="col-lg-7">
-      <div class="glass p-3">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <div class="text-white fw-semibold">Режим работы</div>
-          <div class="muted hint">Можно “Подтянуть” эссе по essay_id из CSV</div>
+      <div class="glass p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="text-white fw-semibold fs-5">Выбор режима работы</div>
         </div>
 
         <!-- Tabs -->
@@ -81,13 +270,19 @@
           <li class="nav-item" role="presentation">
             <button class="nav-link {% if active_tab == 'one' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#tab-one" type="button" role="tab">
-              Одно эссе
+              Одно сочинение
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'multiple' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#tab-multiple" type="button" role="tab">
+              Несколько сочинений
             </button>
           </li>
           <li class="nav-item" role="presentation">
             <button class="nav-link {% if active_tab == 'batch' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#tab-batch" type="button" role="tab">
-              Пачка (batch)
+              JSON (batch)
             </button>
           </li>
         </ul>
@@ -95,45 +290,83 @@
         <div class="tab-content">
           <!-- One -->
           <div class="tab-pane fade {% if active_tab == 'one' %}show active{% endif %}" id="tab-one" role="tabpanel">
-            <form method="post" action="/ui/score_one">
-              <!-- Чтобы не потерять batch поле при сабмите one -->
+            <form method="post" action="/ui/score_one" id="form-one">
               <input type="hidden" name="batch_payload" value="{{ batch_payload|e }}"/>
 
               <div class="row g-3">
                 <div class="col-md-4">
-                  <label class="form-label text-white-50">essay_id</label>
+                  <label class="form-label text-white-50">ID сочинения</label>
                   <input class="form-control" name="essay_id" value="{{ one_form.essay_id }}">
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label text-white-50">essay_type (2 или 3)</label>
+                  <label class="form-label text-white-50">Тип (2 или 3)</label>
                   <input class="form-control" name="essay_type" type="number" min="2" max="3" value="{{ one_form.essay_type }}">
                 </div>
                 <div class="col-md-4 d-flex align-items-end gap-2">
-                  <button class="btn btn-outline-light w-50" type="submit" formaction="/ui/load_one">Подтянуть</button>
-                  <button class="btn btn-primary w-50" type="submit" formaction="/ui/score_one">Оценить</button>
+                  <button class="btn btn-outline-light flex-fill" type="submit" formaction="/ui/load_one">Загрузить</button>
+                  <button class="btn btn-primary flex-fill" type="submit" formaction="/ui/score_one">Оценить</button>
                 </div>
               </div>
 
               <div class="mt-3">
-                <label class="form-label text-white-50">task_text</label>
+                <label class="form-label text-white-50">Текст задания</label>
                 <textarea class="form-control" name="task_text" rows="3">{{ one_form.task_text }}</textarea>
               </div>
 
               <div class="mt-3">
-                <label class="form-label text-white-50">reference_text_essay</label>
+                <label class="form-label text-white-50">Эталонный текст</label>
                 <textarea class="form-control" name="reference_text_essay" rows="6">{{ one_form.reference_text_essay }}</textarea>
               </div>
 
               <div class="mt-3">
-                <label class="form-label text-white-50">essay_text</label>
+                <label class="form-label text-white-50">Текст сочинения</label>
                 <textarea class="form-control" name="essay_text" rows="10">{{ one_form.essay_text }}</textarea>
               </div>
 
               <div class="mt-3 d-flex gap-2">
                 <a class="btn btn-outline-light" href="/ui">Сброс</a>
-                <span class="muted hint align-self-center">Совет: для демо покажите “Одно эссе” и “Пачка”.</span>
               </div>
             </form>
+          </div>
+
+          <!-- Multiple -->
+          <div class="tab-pane fade {% if active_tab == 'multiple' %}show active{% endif %}" id="tab-multiple" role="tabpanel">
+            <div class="mb-3">
+              <div class="filter-controls">
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-4">
+                    <label class="form-label text-white-50 mb-1">Фильтр по типу</label>
+                    <select class="form-control form-control-sm" id="filter-type">
+                      <option value="">Все типы</option>
+                      <option value="2">Тип 2</option>
+                      <option value="3">Тип 3</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label text-white-50 mb-1">Поиск по ID</label>
+                    <input type="text" class="form-control form-control-sm" id="filter-id" placeholder="Введите ID...">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label text-white-50 mb-1 d-block">&nbsp;</label>
+                    <button class="btn btn-outline-light btn-sm w-100 mb-1" onclick="selectAll()">Выбрать все</button>
+                    <button class="btn btn-outline-light btn-sm w-100" onclick="deselectAll()">Снять все</button>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-white-50">Выбрано: <strong id="selected-count" class="text-white">0</strong></span>
+                <button class="btn btn-primary" onclick="scoreSelected()" id="btn-score-multiple">
+                  <span class="loading-spinner spinner-border spinner-border-sm me-2" role="status"></span>
+                  Оценить выбранные
+                </button>
+              </div>
+              <div class="essay-list-container" id="essay-list">
+                <div class="text-center text-muted py-5">
+                  <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                  Загрузка списка сочинений...
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Batch -->
@@ -148,9 +381,6 @@
 
               <div class="mt-3 d-flex gap-2">
                 <a class="btn btn-outline-light" href="/ui">Сброс</a>
-                <div class="muted hint">
-                  Здесь удобно демонстрировать преподавателю: “можно несколько эссе сразу”.
-                </div>
               </div>
             </form>
           </div>
@@ -166,39 +396,517 @@
 
     <!-- Right panel -->
     <div class="col-lg-5">
-      <div class="glass p-3 h-100">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <div class="text-white fw-semibold">Результат</div>
-          <div class="muted hint">Ответ выводится как красивый JSON</div>
+      <div class="glass p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="text-white fw-semibold fs-5">Результаты</div>
         </div>
 
-        {% if result_pretty %}
-          <div class="text-white-50 mb-2">Оценка одного эссе</div>
-          <pre class="mb-3">{{ result_pretty }}</pre>
-        {% endif %}
-
-        {% if batch_pretty %}
-          <div class="text-white-50 mb-2">Результат batch</div>
-          <pre class="mb-3">{{ batch_pretty }}</pre>
-        {% endif %}
-
-        {% if not result_pretty and not batch_pretty %}
-          <div class="muted">
-            Здесь появится ответ после нажатия “Оценить”.
-            <div class="mt-2 hint">
-              На защите можно показать: вкладка “Одно эссе” → затем вкладка “Пачка”.
-            </div>
+        <!-- Progress bar for multiple scoring -->
+        <div class="progress-container mb-3" id="progress-container">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-white-50 small">Прогресс проверки</span>
+            <span class="text-white-50 small" id="progress-text">0 / 0</span>
           </div>
-        {% endif %}
+          <div class="progress" style="height: 8px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated"
+                 role="progressbar" style="width: 0%" id="progress-bar"></div>
+          </div>
+        </div>
+
+        <!-- Results display -->
+        <div id="results-container">
+          {% if result_data %}
+            <script>
+              // Parse and display single result after DOM is loaded
+              document.addEventListener('DOMContentLoaded', function() {
+                const resultData = {{ result_data | tojson }};
+                displaySingleResult(resultData);
+              });
+            </script>
+          {% elif result_pretty %}
+            <div class="text-white-50 mb-2">Оценка одного сочинения</div>
+            <pre class="mb-3">{{ result_pretty }}</pre>
+          {% endif %}
+
+          {% if batch_pretty %}
+            <div class="text-white-50 mb-2">Результат batch</div>
+            <pre class="mb-3">{{ batch_pretty }}</pre>
+          {% endif %}
+
+          {% if not result_pretty and not batch_pretty and not result_data %}
+            <div class="muted text-center py-5">
+              Здесь появятся результаты после проверки сочинений
+            </div>
+          {% endif %}
+        </div>
       </div>
     </div>
-  </div>
-
-  <div class="muted mt-3 hint">
-    Подсказка: сначала запустите <b>python scripts/prepare_inputs.py</b>, чтобы “Подтянуть” работало.
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let allEssays = [];
+let filteredEssays = [];
+let selectedIds = new Set();
+
+// Load essays list
+async function loadEssays() {
+  try {
+    const response = await fetch('/api/essays');
+    const data = await response.json();
+    allEssays = data.essays || [];
+    filteredEssays = [...allEssays];
+    renderEssays();
+  } catch (error) {
+    document.getElementById('essay-list').innerHTML =
+      '<div class="alert alert-danger">Ошибка загрузки: ' + error.message + '</div>';
+  }
+}
+
+// Render essays list
+function renderEssays() {
+  const container = document.getElementById('essay-list');
+  if (filteredEssays.length === 0) {
+    container.innerHTML = '<div class="text-center text-muted py-3">Сочинения не найдены</div>';
+    return;
+  }
+
+  container.innerHTML = filteredEssays.map(essay => {
+    const isSelected = selectedIds.has(essay.essay_id);
+    return `
+      <div class="essay-card ${isSelected ? 'selected' : ''}" onclick="toggleEssay('${essay.essay_id}')">
+        <div class="form-check d-flex align-items-start">
+          <input class="form-check-input mt-1" type="checkbox"
+                 id="essay-${essay.essay_id}"
+                 ${isSelected ? 'checked' : ''}
+                 onchange="toggleEssay('${essay.essay_id}')">
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-start mb-1">
+              <strong style="color: #fff;">ID: ${essay.essay_id}</strong>
+              <span class="badge badge-soft">Тип ${essay.essay_type}</span>
+            </div>
+            <div style="color: rgba(255,255,255,0.7);" class="small mb-1">${essay.task_text}</div>
+            <div style="color: rgba(255,255,255,0.6);" class="small">${essay.essay_preview}</div>
+            <div style="color: rgba(255,255,255,0.5);" class="small mt-1">Длина: ${essay.essay_length} символов</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  updateSelectedCount();
+}
+
+// Toggle essay selection
+function toggleEssay(essayId) {
+  if (selectedIds.has(essayId)) {
+    selectedIds.delete(essayId);
+  } else {
+    selectedIds.add(essayId);
+  }
+  renderEssays();
+}
+
+// Select all visible
+function selectAll() {
+  filteredEssays.forEach(essay => selectedIds.add(essay.essay_id));
+  renderEssays();
+}
+
+// Deselect all
+function deselectAll() {
+  filteredEssays.forEach(essay => selectedIds.delete(essay.essay_id));
+  renderEssays();
+}
+
+// Update selected count
+function updateSelectedCount() {
+  document.getElementById('selected-count').textContent = selectedIds.size;
+}
+
+// Filter essays
+function filterEssays() {
+  const typeFilter = document.getElementById('filter-type').value;
+  const idFilter = document.getElementById('filter-id').value.toLowerCase().trim();
+
+  filteredEssays = allEssays.filter(essay => {
+    const matchType = !typeFilter || essay.essay_type == typeFilter;
+    const matchId = !idFilter || essay.essay_id.toLowerCase().includes(idFilter);
+    return matchType && matchId;
+  });
+  renderEssays();
+}
+
+  // Score selected essays
+async function scoreSelected() {
+  if (selectedIds.size === 0) {
+    alert('Выберите хотя бы одно сочинение для проверки');
+    return;
+  }
+
+  const btn = document.getElementById('btn-score-multiple');
+  const spinner = btn.querySelector('.loading-spinner');
+  const progressContainer = document.getElementById('progress-container');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  const resultsContainer = document.getElementById('results-container');
+
+  btn.disabled = true;
+  spinner.classList.add('active');
+  progressContainer.classList.add('active');
+
+  try {
+    // Get full data for selected essays
+    const response = await fetch('/api/essays/batch', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({essay_ids: Array.from(selectedIds)})
+    });
+
+    if (!response.ok) {
+      throw new Error('Ошибка загрузки данных сочинений');
+    }
+
+    const data = await response.json();
+    const validItems = data.essays || [];
+
+    if (validItems.length === 0) {
+      throw new Error('Не удалось загрузить данные для выбранных сочинений');
+    }
+
+    // Score essays one by one with progress
+    const results = [];
+    const errors = [];
+    const total = validItems.length;
+
+    for (let i = 0; i < validItems.length; i++) {
+      const item = validItems[i];
+      const progress = Math.round(((i + 1) / total) * 100);
+
+      progressBar.style.width = progress + '%';
+      progressText.textContent = `${i + 1} / ${total}`;
+
+      try {
+        const scoreResponse = await fetch('/score_one', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(item)
+        });
+        const result = await scoreResponse.json();
+        if (result.error) {
+          errors.push({essay_id: item.essay_id, error: result.error});
+        } else {
+          results.push(result);
+        }
+      } catch (error) {
+        errors.push({essay_id: item.essay_id, error: error.message});
+      }
+    }
+
+    // Display results
+    displayMultipleResults(results, errors);
+
+    // Scroll to results
+    document.getElementById('results-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (error) {
+    resultsContainer.innerHTML = `<div class="alert alert-danger">Ошибка: ${error.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    spinner.classList.remove('active');
+    // Hide progress after a delay
+    setTimeout(() => {
+      progressContainer.classList.remove('active');
+    }, 1000);
+  }
+}
+
+// Display multiple results in table format
+function displayMultipleResults(results, errors) {
+  const container = document.getElementById('results-container');
+
+  if (results.length === 0 && errors.length === 0) {
+    container.innerHTML = '<div class="alert alert-warning">Нет результатов для отображения</div>';
+    return;
+  }
+
+  let html = '<div class="results-table mb-3">';
+
+  if (results.length > 0) {
+    html += `
+      <table class="table table-dark table-hover mb-0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>K1</th>
+            <th>K2</th>
+            <th>K3</th>
+            <th>K4</th>
+            <th>Сумма</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    results.forEach(result => {
+      const total = (result.K1 || 0) + (result.K2 || 0) + (result.K3 || 0) + (result.K4 || 0);
+      html += `
+        <tr>
+          <td><strong>${result.essay_id}</strong></td>
+          <td><span class="score-badge score-${getScoreClass(result.K1)}">${result.K1 || 0}</span></td>
+          <td><span class="score-badge score-${getScoreClass(result.K2)}">${result.K2 || 0}</span></td>
+          <td><span class="score-badge score-${getScoreClass(result.K3)}">${result.K3 || 0}</span></td>
+          <td><span class="score-badge score-${getScoreClass(result.K4)}">${result.K4 || 0}</span></td>
+          <td><strong class="text-white">${total}</strong></td>
+        </tr>
+      `;
+    });
+
+    html += '</tbody></table></div>';
+
+    // Add detailed explanations for each essay
+    html += '<div class="mt-4">';
+    html += '<div class="text-white fw-semibold mb-3">Подробные объяснения по каждому сочинению</div>';
+
+    results.forEach((result, index) => {
+      const total = (result.K1 || 0) + (result.K2 || 0) + (result.K3 || 0) + (result.K4 || 0);
+      const criteria = [
+        { key: 'K1', name: 'K1 - Позиция ученика', max: 1 },
+        { key: 'K2', name: 'K2 - Примеры из текста', max: 3 },
+        { key: 'K3', name: 'K3 - Логика рассуждения', max: 2 },
+        { key: 'K4', name: 'K4 - Композиция', max: 1 },
+      ];
+
+      html += `
+        <details class="mb-3 glass p-3" style="border-radius: 12px;">
+          <summary class="text-white fw-semibold cursor-pointer" style="cursor: pointer; outline: none;">
+            <div class="d-flex justify-content-between align-items-center">
+              <span>Сочинение ID: ${result.essay_id || 'N/A'}</span>
+              <span class="badge badge-soft ms-2">Сумма: ${total} баллов</span>
+            </div>
+          </summary>
+          <div class="mt-3">
+      `;
+
+      criteria.forEach(criterion => {
+        const score = result[criterion.key] || 0;
+        const explanation = result[`${criterion.key}_explanation`] || 'Объяснение отсутствует';
+        const scoreClass = getScoreClass(score);
+
+        html += `
+          <div class="mb-3 pb-3 border-bottom border-secondary">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="text-white fw-semibold">${criterion.name}</div>
+              <div>
+                <span class="score-badge score-${scoreClass}">${score} / ${criterion.max}</span>
+              </div>
+            </div>
+            <div class="text-white-50 small" style="line-height: 1.6;">${explanation}</div>
+          </div>
+        `;
+      });
+
+      // Meta information if available
+      if (result.meta) {
+        html += '<div class="mt-3 pt-3 border-top border-secondary">';
+        html += '<div class="text-white-50 small">';
+        html += `Модель: ${result.meta.model || 'N/A'} | `;
+        html += `Версия промпта: ${result.meta.prompt_version || 'N/A'} | `;
+        html += `Тип: ${result.meta.essay_type || 'N/A'}`;
+        if (result.meta.json_repair !== undefined) {
+          html += ` | JSON восстановлен: ${result.meta.json_repair ? 'Да' : 'Нет'}`;
+        }
+        html += '</div>';
+        html += '</div>';
+      }
+
+      html += '</div></details>';
+    });
+
+    html += '</div>';
+
+    // Add summary
+    const avgK1 = (results.reduce((sum, r) => sum + (r.K1 || 0), 0) / results.length).toFixed(2);
+    const avgK2 = (results.reduce((sum, r) => sum + (r.K2 || 0), 0) / results.length).toFixed(2);
+    const avgK3 = (results.reduce((sum, r) => sum + (r.K3 || 0), 0) / results.length).toFixed(2);
+    const avgK4 = (results.reduce((sum, r) => sum + (r.K4 || 0), 0) / results.length).toFixed(2);
+    const avgTotal = (results.reduce((sum, r) => sum + (r.K1 || 0) + (r.K2 || 0) + (r.K3 || 0) + (r.K4 || 0), 0) / results.length).toFixed(2);
+
+    html += `
+      <div class="mt-3 p-3 glass">
+        <div class="text-white-50 mb-2"><strong>Статистика:</strong></div>
+        <div class="row g-2 text-center">
+          <div class="col-3">
+            <div class="text-white-50 small">K1 (средн.)</div>
+            <div class="text-white fw-bold">${avgK1}</div>
+          </div>
+          <div class="col-3">
+            <div class="text-white-50 small">K2 (средн.)</div>
+            <div class="text-white fw-bold">${avgK2}</div>
+          </div>
+          <div class="col-3">
+            <div class="text-white-50 small">K3 (средн.)</div>
+            <div class="text-white fw-bold">${avgK3}</div>
+          </div>
+          <div class="col-3">
+            <div class="text-white-50 small">K4 (средн.)</div>
+            <div class="text-white fw-bold">${avgK4}</div>
+          </div>
+        </div>
+        <div class="mt-2 text-center">
+          <div class="text-white-50 small">Средняя сумма баллов</div>
+          <div class="text-white fw-bold fs-5">${avgTotal}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (errors.length > 0) {
+    html += '<div class="alert alert-danger mt-3">';
+    html += '<strong>Ошибки при проверке:</strong>';
+    html += '<ul class="mb-0 mt-2">';
+    errors.forEach(err => {
+      let errorMsg = err.error || 'Неизвестная ошибка';
+      // Извлекаем более понятное сообщение из ошибки
+      if (errorMsg.includes('missing keys')) {
+        const keysMatch = errorMsg.match(/missing keys: \[(.*?)\]/);
+        if (keysMatch) {
+          const missingKeys = keysMatch[1].replace(/'/g, '');
+          errorMsg = `Отсутствуют обязательные поля: ${missingKeys}`;
+        }
+      } else if (errorMsg.includes('LLM scoring failed')) {
+        errorMsg = 'Ошибка при проверке сочинения моделью. Попробуйте проверить еще раз.';
+      }
+      html += `<li class="mb-2"><strong>ID ${err.essay_id}:</strong> ${errorMsg}</li>`;
+    });
+    html += '</ul>';
+    html += '<div class="mt-2 small text-white-50">Попробуйте проверить эти сочинения отдельно или проверить формат данных.</div>';
+    html += '</div>';
+  }
+
+  // Add expandable details
+  html += '<details class="mt-3"><summary class="text-white-50 cursor-pointer" style="cursor: pointer;">Подробные результаты (JSON)</summary>';
+  html += '<pre class="mt-2">' + JSON.stringify({results, errors}, null, 2) + '</pre></details>';
+
+  container.innerHTML = html;
+}
+
+function getScoreClass(score) {
+  if (score >= 2) return 'good';
+  if (score >= 1) return 'medium';
+  return 'low';
+}
+
+// Display single result with detailed information
+function displaySingleResult(result) {
+  const container = document.getElementById('results-container');
+
+  if (!result) {
+    container.innerHTML = '<div class="alert alert-warning">Нет результата для отображения</div>';
+    return;
+  }
+
+  const total = (result.K1 || 0) + (result.K2 || 0) + (result.K3 || 0) + (result.K4 || 0);
+
+  let html = '<div class="text-white-50 mb-3"><strong>Результат проверки сочинения</strong></div>';
+
+  // Main scores table
+  html += `
+    <div class="results-table mb-3">
+      <table class="table table-dark table-hover mb-0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>K1</th>
+            <th>K2</th>
+            <th>K3</th>
+            <th>K4</th>
+            <th>Сумма</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>${result.essay_id || 'N/A'}</strong></td>
+            <td><span class="score-badge score-${getScoreClass(result.K1)}">${result.K1 || 0}</span></td>
+            <td><span class="score-badge score-${getScoreClass(result.K2)}">${result.K2 || 0}</span></td>
+            <td><span class="score-badge score-${getScoreClass(result.K3)}">${result.K3 || 0}</span></td>
+            <td><span class="score-badge score-${getScoreClass(result.K4)}">${result.K4 || 0}</span></td>
+            <td><strong class="text-white fs-5">${total}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  // Detailed explanations
+  html += '<div class="glass p-3 mt-3">';
+  html += '<div class="text-white fw-semibold mb-3">Подробные объяснения</div>';
+
+  const criteria = [
+    { key: 'K1', name: 'K1 - Позиция ученика', max: 1 },
+    { key: 'K2', name: 'K2 - Примеры из текста', max: 3 },
+    { key: 'K3', name: 'K3 - Логика рассуждения', max: 2 },
+    { key: 'K4', name: 'K4 - Композиция', max: 1 },
+  ];
+
+  criteria.forEach(criterion => {
+    const score = result[criterion.key] || 0;
+    const explanation = result[`${criterion.key}_explanation`] || 'Объяснение отсутствует';
+    const scoreClass = getScoreClass(score);
+
+    html += `
+      <div class="mb-3 pb-3 border-bottom border-secondary">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="text-white fw-semibold">${criterion.name}</div>
+          <div>
+            <span class="score-badge score-${scoreClass} me-2">${score} / ${criterion.max}</span>
+          </div>
+        </div>
+        <div class="text-white-50 small" style="line-height: 1.6;">${explanation}</div>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+
+  // Meta information
+  if (result.meta) {
+    html += '<div class="mt-3 p-3 glass">';
+    html += '<div class="text-white-50 small mb-2"><strong>Информация о проверке:</strong></div>';
+    html += '<div class="text-white-50 small">';
+    html += `Модель: ${result.meta.model || 'N/A'} | `;
+    html += `Версия промпта: ${result.meta.prompt_version || 'N/A'} | `;
+    html += `Тип сочинения: ${result.meta.essay_type || 'N/A'}`;
+    if (result.meta.json_repair !== undefined) {
+      html += ` | JSON восстановлен: ${result.meta.json_repair ? 'Да' : 'Нет'}`;
+    }
+    html += '</div>';
+    html += '</div>';
+  }
+
+  // Expandable JSON details
+  html += '<details class="mt-3"><summary class="text-white-50 cursor-pointer" style="cursor: pointer;">Полный результат (JSON)</summary>';
+  html += '<pre class="mt-2">' + JSON.stringify(result, null, 2) + '</pre></details>';
+
+  container.innerHTML = html;
+}
+
+// Event listeners
+document.getElementById('filter-type').addEventListener('change', filterEssays);
+document.getElementById('filter-id').addEventListener('input', filterEssays);
+
+// Load essays on page load if multiple tab is active
+document.addEventListener('DOMContentLoaded', function() {
+  const multipleTab = document.getElementById('tab-multiple');
+  if (multipleTab && multipleTab.classList.contains('active')) {
+    loadEssays();
+  }
+
+  // Load when switching to multiple tab
+  const multipleTabBtn = document.querySelector('[data-bs-target="#tab-multiple"]');
+  if (multipleTabBtn) {
+    multipleTabBtn.addEventListener('shown.bs.tab', loadEssays);
+  }
+});
+</script>
 </body>
 </html>

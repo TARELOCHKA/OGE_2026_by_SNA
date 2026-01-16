@@ -5,6 +5,13 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
 
 # ---------------------------
 # Virtual environment
@@ -12,6 +19,9 @@ __pycache__/
 .venv/
 venv/
 env/
+ENV/
+env.bak/
+venv.bak/
 
 # ---------------------------
 # Environment / secrets
@@ -19,42 +29,81 @@ env/
 .env
 .env.*
 *.env
+!.env.example
 
 # ---------------------------
-# OS / Editor
+# IDE / Editor
 # ---------------------------
-.DS_Store
-Thumbs.db
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
 
 # ---------------------------
-# Jupyter
+# Jupyter Notebooks
 # ---------------------------
 .ipynb_checkpoints/
+*.ipynb
 
 # ---------------------------
 # Logs
 # ---------------------------
 *.log
+logs/
+*.log.*
+
+# ---------------------------
+# Testing
+# ---------------------------
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
 
 # ---------------------------
 # Data / generated files
 # ---------------------------
+# Раскомментируйте следующие строки, если НЕ хотите коммитить данные
 # data/*.csv
 # data/*.tsv
 # data/*.json
 
-# Если вдруг понадобятся сами данные — закомментируйте строки выше
+# Временные файлы данных (не включать в репозиторий)
+data/*_temp.csv
+data/*_backup.*
 
 # ---------------------------
-# Build / cache
+# Experiments / outputs
 # ---------------------------
-build/
-dist/
-*.egg-info/
+experiments/*.json
+experiments/*.csv
+!experiments/.gitkeep
 
 # ---------------------------
-# Docker (опционально)
+# Build artifacts
 # ---------------------------
 *.tar
+*.gz
+*.zip
+
+# ---------------------------
+# OS specific
+# ---------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# ---------------------------
+# Application specific
+# ---------------------------
+*.pid
+*.sock
+*.pid.lock

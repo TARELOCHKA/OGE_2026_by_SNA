@@ -8,7 +8,7 @@ from .schemas import (
     validate_batch_input,
 )
 from .scoring import score_essay
-from .data_store import get_by_essay_id  # <-- добавили
+from .data_store import get_by_essay_id, get_all_essays, get_essays_by_ids
 
 bp = Blueprint("api", __name__)
 
@@ -25,6 +25,28 @@ def pretty_json(obj) -> str:
 @bp.get("/health")
 def health():
     return jsonify({"status": "ok"})
+
+
+@bp.get("/api/essays")
+def get_essays():
+    """Получить список всех доступных сочинений."""
+    try:
+        essays = get_all_essays()
+        return jsonify({"essays": essays})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.post("/api/essays/batch")
+def get_essays_batch():
+    """Получить полные данные для списка essay_id."""
+    data = request.get_json(silent=True) or {}
+    essay_ids = data.get("essay_ids", [])
+    try:
+        essays = get_essays_by_ids(essay_ids)
+        return jsonify({"essays": essays})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @bp.post("/score_one")
@@ -101,12 +123,14 @@ def _sample_batch():
 
 @bp.get("/ui")
 def ui_app():
+    active_tab = request.args.get("tab", "one")
     return render_template(
         "app.html",
-        active_tab="one",
+        active_tab=active_tab,
         one_form=_one_defaults(),
         batch_payload=json.dumps(_sample_batch(), ensure_ascii=False, indent=2),
         result_pretty=None,
+        result_data=None,
         batch_pretty=None,
         error=None,
     )
@@ -131,6 +155,7 @@ def ui_load_one():
             one_form=loaded,
             batch_payload=batch_payload or json.dumps(_sample_batch(), ensure_ascii=False, indent=2),
             result_pretty=None,
+            result_data=None,
             batch_pretty=None,
             error=None,
         )
@@ -145,6 +170,7 @@ def ui_load_one():
             one_form=one_form,
             batch_payload=batch_payload or json.dumps(_sample_batch(), ensure_ascii=False, indent=2),
             result_pretty=None,
+            result_data=None,
             batch_pretty=None,
             error=str(e),
         ), 400
@@ -171,6 +197,7 @@ def ui_score_one():
             one_form=one_form,
             batch_payload=request.form.get("batch_payload", "") or json.dumps(_sample_batch(), ensure_ascii=False, indent=2),
             result_pretty=pretty_json(out),
+            result_data=out,
             batch_pretty=None,
             error=None,
         )
@@ -191,6 +218,7 @@ def ui_score_one():
             one_form=one_form,
             batch_payload=request.form.get("batch_payload", "") or json.dumps(_sample_batch(), ensure_ascii=False, indent=2),
             result_pretty=None,
+            result_data=None,
             batch_pretty=None,
             error=str(e),
         ), 400
@@ -225,6 +253,7 @@ def ui_score_batch():
             one_form=_one_defaults(),
             batch_payload=payload,
             result_pretty=None,
+            result_data=None,
             batch_pretty=pretty_json(batch_result),
             error=None,
         )
@@ -236,6 +265,7 @@ def ui_score_batch():
             one_form=_one_defaults(),
             batch_payload=request.form.get("batch_payload", "") or json.dumps(_sample_batch(), ensure_ascii=False, indent=2),
             result_pretty=None,
+            result_data=None,
             batch_pretty=None,
             error=str(e),
         ), 400
