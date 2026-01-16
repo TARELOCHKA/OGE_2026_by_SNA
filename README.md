@@ -233,7 +233,9 @@ oge-essay-scoring/
 │   ├── make_submission.py  # Генерация submission.csv
 │   └── ...
 ├── wsgi.py                 # Точка входа для WSGI сервера
-├── Procfile                # Конфигурация для деплоя
+├── Procfile                # Конфигурация для деплоя (Heroku/Amvera)
+├── amvera.yaml             # Конфигурация для Amvera
+├── runtime.txt             # Версия Python для деплоя
 ├── requirements.txt        # Зависимости Python
 └── README.md              # Документация
 ```
@@ -242,12 +244,16 @@ oge-essay-scoring/
 
 ### Деплой на Amvera
 
-Подробная инструкция по деплою доступна в [DEPLOY.md](DEPLOY.md).
-
-**Кратко:**
-1. Подключите Git репозиторий в Amvera
-2. Установите переменные окружения
-3. Amvera автоматически определит `wsgi.py` как точку входа
+1. Подключите Git репозиторий в Amvera или загрузите файлы вручную
+2. Установите переменные окружения в разделе "Переменные" (важно установить этап "Запуск"):
+   - `GIGACHAT_TOKEN` (секрет)
+   - `GIGACHAT_MODEL=GigaChat`
+   - `TEMPERATURE=0.0`
+   - `PROMPT_VERSION=v1.1`
+   - `MAX_TOKENS=900`
+   - `MAX_BATCH_SIZE=30`
+   - `REQUEST_TIMEOUT_SEC=60`
+3. Файл `amvera.yaml` уже содержит необходимую конфигурацию
 4. Приложение будет доступно по предоставленному URL
 
 ### Деплой на другие платформы
@@ -263,7 +269,13 @@ oge-essay-scoring/
 ### Запуск в режиме разработки
 
 ```bash
-python run.py
+python -c "from app import create_app; create_app().run(host='0.0.0.0', port=8080, debug=True)"
+```
+
+Или используйте Flask CLI:
+```bash
+export FLASK_APP=wsgi:app
+flask run --host=0.0.0.0 --port=8080
 ```
 
 Приложение запустится с автоперезагрузкой при изменении кода.

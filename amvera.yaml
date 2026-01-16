@@ -1,0 +1,15 @@
+meta:
+  environment: python
+  toolchain:
+    name: pip
+    version: "3.11"
+
+build:
+  requirementsPath: "requirements.txt"
+  useCache: true
+
+run:
+  scriptName: ""
+  command: "gunicorn --bind 0.0.0.0:80 --workers 2 --timeout 120 wsgi:app"
+  persistenceMount: "/data"
+  containerPort: 80

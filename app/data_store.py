@@ -1,15 +1,30 @@
 import pandas as pd
 from pathlib import Path
+import os
 
 _DATA = None
 
-def load_inputs(path: str = "data/inputs_for_scoring.csv"):
+def load_inputs(path: str = None):
+    """Загружает данные из CSV файла. Путь определяется относительно корня проекта."""
     global _DATA
     if _DATA is None:
-        p = Path(path)
-        if not p.exists():
-            raise FileNotFoundError(f"Not found: {path}. Run scripts/prepare_inputs.py first.")
-        _DATA = pd.read_csv(p)
+        if path is None:
+            # Определяем корень проекта (где находится wsgi.py или app/)
+            base_dir = Path(__file__).resolve().parent.parent
+            path = base_dir / "data" / "inputs_for_scoring.csv"
+        else:
+            path = Path(path)
+            if not path.is_absolute():
+                # Если путь относительный, делаем его относительно корня проекта
+                base_dir = Path(__file__).resolve().parent.parent
+                path = base_dir / path
+
+        if not path.exists():
+            raise FileNotFoundError(
+                f"Not found: {path}. Run scripts/prepare_inputs.py first. "
+                f"Current working directory: {os.getcwd()}"
+            )
+        _DATA = pd.read_csv(path)
         _DATA["essay_id"] = _DATA["essay_id"].astype(str)
     return _DATA
 
